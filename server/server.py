@@ -9,10 +9,22 @@ import random
 import cPickle
 import math
 #}}}
+#{{{ Globals
+width = 800
+height = 600
+#}}}
 class Level: #{{{
 	def __init__(self, filename):
-		#self.data = read(filename)
-		self.data = [[' ', '*', '*'], ['O', 'P', ' '], [' ', ' ', ' '], ['O', 'O', 'O']]
+		f = open(filename)
+		d = f.read()
+		e = d.split("\n")
+		objs = []
+		for i in range(len(e)):
+			for j in range(len(e[i])):
+				if e[i][j] != ' ':
+					objs.append( {'position': ((j+0.5)*10-width/2, height/2-(i-0.5)*10 -10), 'type': e[i][j]} )
+		self.data = objs
+		f.close()
 		self.filename = filename
 #}}}
 class Player: #{{{
@@ -27,19 +39,23 @@ class Player: #{{{
 		self.lastping = time.time()
 		self.pingpong = (0,time.time())
 		self.error = (0, '')
+		self.color = (random.random(), random.random(), random.random())
 	def getInfo(self):
-		return (self.id, self.name, self.ping, self.position, self.angle, self.towerAngle)
+		info = {'id': self.id, 'name': self.name, 'ping': self.ping, 'position': self.position, 'angle': self.angle, 'towerAngle': self.towerAngle, 'color': self.color}
+		return info
 #}}}
 class Shot: #{{{
-	def __init__(self, position, angle):
+	def __init__(self, position, angle, color):
 		self.x = float(position[0])
 		self.y = float(position[1])
 		self.angle = angle
 		self.speed = 1.5
 		self.lastmove = time.time()
 		self.erase = False
+		self.color = color
 	def getInfo(self):
-		return ((self.x, self.y), self.angle)
+		info = {'position': (self.x, self.y), 'angle': self.angle, 'color': self.color}
+		return info
 	def update(self):
 		self.lastmove = time.time()
 
@@ -118,11 +134,11 @@ def process_connection(): #{{{
 
 
 			for player in PLAYERS:
-				if player.addr != addr: continue
-
-				if (time.time() - player.lastping) > 60:
+				if (time.time() - p.lastping) > 60:
 					#client timed out
-					dead_sockets.append(player)
+					dead_sockets.append(p)
+					
+				if player.addr != addr: continue
 
 				if (time.time() - player.lastping) > 5:
 					print time.time(), ": Sending ping to", player.name
@@ -157,15 +173,20 @@ def process_connection(): #{{{
 								#print player.ping
 						elif data[0] == 'M': #move <x> <y> <angle> <towerAngle>
 							(x, y, angle, towerAngle) = data[2:].split(' ')
-							player.position = (x, y)
-							player.angle = angle
-							player.towerAngle = towerAngle
+							x = float(x)
+							y = float(y)
+							if x < -(width/2) or x > width/2 or y < -(height/2) or y > height/2:
+								pass
+							else:
+								player.position = (x, y)
+								player.angle = angle
+								player.towerAngle = towerAngle
 						elif data[0] == 'S': #shoot <angle>
 							angle = int(data[2:])
-							SHOTS.append(Shot(player.position,angle))
+							SHOTS.append(Shot(player.position,angle, player.color))
 						elif data[0] == 'G': #get
 							if data[1] == 'L': #get level
-								sock.sendto(cPickle.dumps((level.filename, level.data))+"\x00", player.addr)
+								sock.sendto("L" + cPickle.dumps((level.filename, level.data))+"\x00", player.addr)
 						elif data[0] == '\\':
 							(command, sep, args) = data[1:].partition(' ')
 							if command == 'quit':
@@ -222,7 +243,7 @@ if __name__ == '__main__': #{{{
 	debug = False
 	debug = True
 
-	level = Level('lvl1')
+	level = Level('levels/1')
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.bind(ADDR)
