@@ -16,6 +16,9 @@ import pygame
 import pygame.image
 import pygame.font
 from pygame.locals import *
+
+from Vertex2 import *
+from Collision import *
 #}}}
 #{{{ Globals
 HOST = 'localhost'
@@ -38,76 +41,6 @@ id = 0
 LEVEL = []
 DOTS= [] #debug-dots
 #}}}
-class Vertex2: # {{{
-	def __init__(self, x, y):
-		self.x = x
-		self.y = y
-	def __str__(self):
-		return str((self.x, self.y))
-	def __add__(self, v):
-		return Vertex2(self.x + v.x, self.y + v.y)
-	def __sub__(self, v):
-		return Vertex2(self.x - v.x, self.y - v.y)
-	def __mul__(self, multiple):
-		return Vertex2(self.x * multiple, self.y * multiple)
-	__rmul__ = __mul__
-	def __div__(self, divisor):
-		return Vertex2(1.0 / divisor * self)
-	def dot(self, other):
-		return self.x*other.x + self.y*other.y
-	def magnitude(self):
-		return math.sqrt(self.x*self.x + self.y*self.y)
-	def normalize(self):
-		inverse_magnitude = 1.0/self.magnitude()
-		return Vertex2(self.x*inverse_magnitude, self.y*inverse_magnitude)
-	def perpendicular(self):
-		return Vertex2(-self.y, self.x)
-# }}}
-class Projection: #{{{
-	def __init__(self, min, max):
-		self.min, self.max = min, max
-	def intersects(self, other):
-		return self.max > other.min and other.max > self.min
-# }}}
-class Polygon: #{{{
-	def __init__(self, points):
-		"""points is a list of Vectors"""
-		self.points = points
-		
-		# Build a list of the edge vectors
-		self.edges = []
-		for i in range(len(points)):
-			point = points[i]
-			next_point = points[(i+1)%len(points)]
-			self.edges.append(next_point - point)
-	def project_to_axis(self, axis):
-		"""axis is the unit vector (vector of magnitude 1) to project the polygon onto"""
-		projected_points = []
-		for point in self.points:
-			# Project point onto axis using the dot operator
-			projected_points.append(point.dot(axis))
-		return Projection(min(projected_points), max(projected_points))
-	def intersects(self, other):
-		"""returns whether or not two polygons intersect"""
-		# Create a list of both polygons' edges
-		edges = []
-		edges.extend(self.edges)
-		edges.extend(other.edges)
-		
-		for edge in edges:
-			axis = edge.normalize().perpendicular() # Create the separating axis (see diagrams)
-			
-			# Project each to the axis
-			self_projection = self.project_to_axis(axis)
-			other_projection = other.project_to_axis(axis)
-			
-			# If the projections don't intersect, the polygons don't intersect
-			if not self_projection.intersects(other_projection):
-				return False
-		
-		# The projections intersect on all axes, so the polygons are intersecting
-		return True
-# }}}
 def glDot(v, color = []): #{{{
 	glLoadIdentity()
 	if color == []:
@@ -121,55 +54,7 @@ def glDot(v, color = []): #{{{
 	glVertex3f( 1,-1, 0.0)
 	glVertex3f(-1,-1, 0.0)
 	glEnd()
-# }}}
-def Intersect(rect1, rect2): #{{{
-	global DOTS
-	DOTS = []
-
-	Width = rect1[2].x * 2
-	hw = Width/2 #half width
-	Height = rect1[2].y * 2
-	hh = Height/2 #half height
-	#A = math.radians(rect1[1])
-	A = rect1[1]
-	sina = math.sin(A)
-	cosa = math.cos(A)
-
-	ul1 = Vertex2(rect1[0].x - hw*cosa - hh*sina, rect1[0].y + hh*cosa - hw*sina)
-	ur1 = Vertex2(rect1[0].x + hw*cosa - hh*sina, rect1[0].y + hh*cosa + hw*sina)
-	dl1 = Vertex2(rect1[0].x - hw*cosa + hh*sina, rect1[0].y - hh*cosa - hw*sina)
-	dr1 = Vertex2(rect1[0].x + hw*cosa + hh*sina, rect1[0].y - hh*cosa + hw*sina)
-
-	Width = rect2[2].x * 2
-	hw = Width/2 #half width
-	Height = rect2[2].y * 2
-	hh = Height/2 #half height
-	#A = math.radians(rect2[1])
-	A = rect2[1]
-	sina = math.sin(A)
-	cosa = math.cos(A)
-
-	ul2 = Vertex2(rect2[0].x - hw * cosa - hh * sina, rect2[0].y + hh * cosa - hw*sina)
-	ur2 = Vertex2(rect2[0].x + hw * cosa - hh * sina, rect2[0].y + hh * cosa + hw*sina)
-	dl2 = Vertex2(rect2[0].x - hw * cosa + hh * sina, rect2[0].y - hh * cosa - hw*sina)
-	dr2 = Vertex2(rect2[0].x + hw * cosa + hh * sina, rect2[0].y - hh * cosa + hw*sina)
-
-	points1 = [ul1, ur1, dr1, dl1]
-	points2 = [ul2, ur2, dr2, dl2]
-	p1 = Polygon(points1)
-	p2 = Polygon(points2)
-
-	#DOTS.append(ul1)
-	#DOTS.append(ul2)
-	#DOTS.append(ur1)
-	#DOTS.append(ur2)
-	#DOTS.append(dl1)
-	#DOTS.append(dl2)
-	#DOTS.append(dr1)
-	#DOTS.append(dr2)
-
-	return p1.intersects(p2)
-# }}}
+#}}}
 class Text: #{{{
 	def __init__(self):
 		pygame.font.init()
