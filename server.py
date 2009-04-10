@@ -8,6 +8,8 @@ import time
 import random
 import cPickle
 import math
+from Collision import *
+from Vertex2 import *
 #}}}
 #{{{ Globals
 width = 800
@@ -40,12 +42,13 @@ class Player: #{{{
 		self.pingpong = (0,time.time())
 		self.error = (0, '')
 		self.color = (random.random(), random.random(), random.random())
+		self.hp = 100;
 	def getInfo(self):
 		info = {'id': self.id, 'name': self.name, 'ping': self.ping, 'position': self.position, 'angle': self.angle, 'towerAngle': self.towerAngle, 'color': self.color}
 		return info
 #}}}
 class Shot: #{{{
-	def __init__(self, position, angle, color):
+	def __init__(self, position, angle, color, ownerId):
 		self.x = float(position[0])
 		self.y = float(position[1])
 		self.angle = angle
@@ -53,6 +56,8 @@ class Shot: #{{{
 		self.lastmove = time.time()
 		self.erase = False
 		self.color = color
+		self.size = 1.0
+		self.ownerId = ownerId
 	def getInfo(self):
 		info = {'position': (self.x, self.y), 'angle': self.angle, 'color': self.color}
 		return info
@@ -62,8 +67,33 @@ class Shot: #{{{
 		self.x += math.sin(math.radians(self.angle)) * self.speed
 		self.y -= math.cos(math.radians(self.angle)) * self.speed
 
-		if self.x < -400 or self.x > 400 or self.y < -300 or self.y > 300:
+		if self.x < -400 or self.x > 400 or self.y < -300 or self.y > 300 or self.checkCollision():
 			self.erase = True
+
+	def intersects(self, (x, y), angle, length, width):
+		pos = Vertex2(x, y);
+		selfpos = Vertex2(self.x, self.y);
+
+		dist = pos - selfpos;
+		distance = math.sqrt((dist.x * dist.x) + (dist.y * dist.y));
+
+		size = length;
+		if (width > length): size = width;
+		if distance < size/2 + self.size/2 + 0.5:
+			a = [pos, math.radians(float(angle)), Vertex2(length, width)];
+			b = [selfpos, math.radians(0.0), Vertex2(self.size, self.size)];
+			collision = Intersect(a,b);
+			if (collision): return True;
+	def checkCollision(self):
+		global PLAYERS;
+		for p in PLAYERS:
+			if p.id == self.ownerId: continue
+			if (self.intersects(p.position, p.angle, 21.0, 10.5)): 
+				p.hp -= 5;
+				return True;
+
+		for obj in level.data:
+			if (self.intersects(obj['position'], 0.0, 5.0, 5.0)): return True;
 #}}}
 def broadcast_data(addr, message): #{{{
 	global PLAYERS
@@ -183,7 +213,7 @@ def process_connection(): #{{{
 								player.towerAngle = towerAngle
 						elif data[0] == 'S': #shoot <angle>
 							angle = int(data[2:])
-							SHOTS.append(Shot(player.position,angle, player.color))
+							SHOTS.append(Shot(player.position,angle, player.color, player.id))
 						elif data[0] == 'G': #get
 							if data[1] == 'L': #get level
 								sock.sendto("L" + cPickle.dumps((level.filename, level.data))+"\x00", player.addr)
