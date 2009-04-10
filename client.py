@@ -259,7 +259,7 @@ def send(data): #{{{
 		exit(0)
 #}}}
 def recv_data(): #{{{
-	global PLAYERS, SHOTS, LEVEL, scrollback, x, y
+	global PLAYERS, SHOTS, LEVEL, scrollback, x, y, id
 	t = time.time()
 	while not quit:
 		try:
@@ -605,8 +605,9 @@ def buildLists(): #{{{
 	glEndList()
 #}}}
 #}}}
-def collision(x, y, angle): #{{{
-	tank_pos = Vertex2(x, y)
+def collision(tank1x, tank1y, angle): #{{{
+	global x, y
+	tank_pos = Vertex2(tank1x, tank1y)
 	tank_size = 42.0
 	obj_size = 10.0
 	for obj in LEVEL[1]:
@@ -620,6 +621,36 @@ def collision(x, y, angle): #{{{
 			b = [obj_pos, math.radians(0.0), Vertex2(5.0,5.0)]
 			collision = Intersect(a,b)
 			if collision: return True
+	
+	for p in PLAYERS: # Could be optimized
+		if (int(p['id']) == int(id)):
+			me = p
+			break
+	
+	for p in PLAYERS:
+		
+		if p['id'] != me['id']:
+			#tank1pos = Vertex2(me['position'][0], me['position'][1]) # Could exist some local variables
+			tank2pos = Vertex2(p['position'][0], p['position'][1])
+			dist = tank_pos - tank2pos
+			distance = math.sqrt((dist.x ** 2) + (dist.y ** 2))
+			
+			if distance < tank_size:
+				a = [tank_pos, math.radians(float(me['angle'])), Vertex2(21.0, 10.5)]
+				b =[tank2pos, math.radians(float(p['angle'])), Vertex2(21.0,10.5)]
+				collision = Intersect(a,b)
+				#if collision: return True
+				#if collision: print "lol"
+				if collision:
+					# This is so that tanks do not get stuck into each other.
+					x1, y1, x2, y2 = tank_pos.x, tank_pos.y, tank2pos.x, tank2pos.y
+					angle = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi # Get angle
+					x -= math.sin(math.radians(angle+90)) * speedForward # NOTE: speedForward could be wrong here. It is more the rotating speed maybe.
+					y += math.cos(math.radians(angle+90)) * speedForward
+					
+					return True
+			
+	
 
 	return False
 #}}}
