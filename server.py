@@ -42,17 +42,25 @@ class Player: #{{{
 		self.pingpong = (0,time.time())
 		self.error = (0, '')
 		self.color = (random.random(), random.random(), random.random())
-		self.hp = 100;
+		self.hp = 100
 	def getInfo(self):
 		info = {'id': self.id, 'name': self.name, 'ping': self.ping, 'position': self.position, 'angle': self.angle, 'towerAngle': self.towerAngle, 'color': self.color}
 		return info
+	def kill(self):
+		self.spawn()
+	def spawn(self):
+		newx = random.randint(-width/2 + 50, width/2 - 50)
+		newy = random.randint(-height/2 + 50, height/2 - 50)
+		self.position = newx, newy
+		send_data(self.addr, 'FU' + cPickle.dumps(self.position))
+		self.hp = 100
 #}}}
 class Shot: #{{{
 	def __init__(self, position, angle, color, ownerId):
 		self.x = float(position[0])
 		self.y = float(position[1])
 		self.angle = angle
-		self.speed = 1.5
+		self.speed = 5
 		self.lastmove = time.time()
 		self.erase = False
 		self.color = color
@@ -71,29 +79,37 @@ class Shot: #{{{
 			self.erase = True
 
 	def intersects(self, (x, y), angle, length, width):
-		pos = Vertex2(x, y);
-		selfpos = Vertex2(self.x, self.y);
+		pos = Vertex2(x, y)
+		selfpos = Vertex2(self.x, self.y)
 
-		dist = pos - selfpos;
-		distance = math.sqrt((dist.x * dist.x) + (dist.y * dist.y));
+		dist = pos - selfpos
+		distance = math.sqrt((dist.x * dist.x) + (dist.y * dist.y))
 
-		size = length;
-		if (width > length): size = width;
-		if distance < size/2 + self.size/2 + 0.5:
-			a = [pos, math.radians(float(angle)), Vertex2(length, width)];
-			b = [selfpos, math.radians(0.0), Vertex2(self.size, self.size)];
-			collision = Intersect(a,b);
-			if (collision): return True;
+		size = length
+		if (width > size): size = width
+		if distance < size + self.size/2 + 0.5:
+			a = [pos, math.radians(float(angle)), Vertex2(length, width)]
+			b = [selfpos, math.radians(0.0), Vertex2(self.size, self.size)]
+			collision = Intersect(a,b)
+			if (collision): return True
 	def checkCollision(self):
-		global PLAYERS;
+		global PLAYERS
 		for p in PLAYERS:
 			if p.id == self.ownerId: continue
 			if (self.intersects(p.position, p.angle, 21.0, 10.5)): 
-				p.hp -= 5;
-				return True;
+				p.hp -= 50
+				if (p.hp <= 0):
+					p.kill()
+				return True
 
 		for obj in level.data:
-			if (self.intersects(obj['position'], 0.0, 5.0, 5.0)): return True;
+			if (self.intersects(obj['position'], 0.0, 5.0, 5.0)): return True
+#}}}
+def send_data(addr, message): #{{{
+	try:
+		sock.sendto(message + "\x00", addr)
+	except:
+		if debug: traceback.print_exec()
 #}}}
 def broadcast_data(addr, message): #{{{
 	global PLAYERS
@@ -120,7 +136,7 @@ def process_connection(): #{{{
 			#print "acquired lock ...",
 
 			for s in SHOTS:
-				if time.time() - s.lastmove > 1.0/200:
+				if time.time() - s.lastmove > 1.0/30:
 					if s.erase:
 						SHOTS.remove(s)
 					else:

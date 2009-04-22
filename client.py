@@ -38,7 +38,7 @@ backgroundColor = (68, 68, 68)
 fps = 0
 scrollback = []
 id = 0
-LEVEL = []
+LEVEL = ['', []]
 DOTS= [] #debug-dots
 #}}}
 def glDot(v, color = []): #{{{
@@ -174,6 +174,8 @@ def recv_data(): #{{{
 				elif c[0] == "C":
 					scrollback.insert(0, "Chat: " + str(c[1:]))
 					print "Chat: ", c[1:]
+				elif c[0:2] == "FU":
+					(x, y) = cPickle.loads(c[2:])
 				elif c[0] == "S":
 					print "Server message: ", c[1:]
 					lines = c[1:].split('\n')
@@ -571,7 +573,7 @@ def handleInput(): #{{{
 	cmd_index = -1
 	cmd = ''
 	zoom = 1
-	my = 0;
+	my = 0
 	mx = 0
 	t = time.time()
 	st = time.time()
@@ -706,17 +708,10 @@ if __name__ == "__main__": #{{{
 
 	thread.start_new_thread(handleInput, ())
 
-	lastRender = time.time()
-
 	try:
 		time.sleep(0.1)
 		while not quit:
-			if True:#time.time() - lastRender > 1.0/100:
-				lastRender = time.time()
-				render()
-			else:
-				#time.sleep(0.01)
-				pass
+			render()
 
 	except Exception, e:
 		traceback.print_exc()
