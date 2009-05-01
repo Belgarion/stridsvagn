@@ -1,0 +1,12 @@
+Dependencies:
+	Ubuntu:
+		python
+		python-opengl
+		python-pygame
+		python-numpy
+	
+	Gentoo:
+		dev-lang/python
+		dev-python/pyopengl
+		dev-python/pygame
+		dev-python/numpy
