@@ -40,6 +40,9 @@ scrollback = []
 id = 0
 LEVEL = ['', []]
 DOTS= [] #debug-dots
+zoom = 1
+(mx, my) = (0,0)
+shootTime = time.time()
 #}}}
 def glDot(v, color = []): #{{{
 	glLoadIdentity()
@@ -73,8 +76,8 @@ class Text: #{{{
 
 	def createCharacter(self, index, s):
 		try:
-			letter_render = self.font.render(s, 1, (255,255,255), (0,0,0))
-			letter = pygame.image.tostring(letter_render, 'RGBA', 1)
+			letter_render = self.font.render(s, True, (255,255,255), (0,0,0))
+			letter = pygame.image.tostring(letter_render, 'RGBA', True)
 			letter_w, letter_h = letter_render.get_size()
 
 			letter_arr = list(letter)
@@ -123,12 +126,11 @@ class Text: #{{{
 			ch = self.char[ord(s[i])]
 			glLoadIdentity()
 			glTranslatef(x + lx, y, z)
-			glCallList(ch[0])
+			if (type(ch[0]) == type(0)): glCallList(ch[0])
 			lx += ch[1]
 			i += 1
 		glDisable(GL_TEXTURE_2D)
 	def createTexDL(self, texture, width, height):
-
 		return newList
 
 	def DrawFPS(self, fps):
@@ -205,6 +207,12 @@ def send_data(): #{{{
 #}}}
 #{{{ Rendering
 def displayConsole(): #{{{
+	if (text.lh == 0):
+		print "Text height is zero, cannot display console"
+		global showConsole
+		showConsole = False
+		return
+
 	cw = width
 	ch = height/2
 	glLoadIdentity()
@@ -566,48 +574,57 @@ def rotate(direction): #{{{
 	if collision(x,y,angle): angle = oldAngle
 
 #}}}
+def handleMouse(): #{{{
+	global showConsole, mx, my, towerAngle, zoom, shootTime
+
+	if showConsole: return
+
+	try:
+		for event in pygame.event.get([MOUSEMOTION,MOUSEBUTTONDOWN]):
+			if event.type == MOUSEMOTION:
+				(mx, my) = event.pos
+				mx = mx - width/2
+				my = height - my - height/2
+			elif event.type == MOUSEBUTTONDOWN:
+				if event.button == 4:
+					zoom += 0.1
+					if zoom == 0: zoom = 0.1
+				elif event.button == 5:
+					zoom -= 0.1
+					if zoom == 0: zoom = -0.1
+
+		towerAngle = math.degrees(math.atan2(my - y, mx - x)) + 90
+
+		mousePressed = pygame.mouse.get_pressed()
+		if mousePressed[0]:
+			if time.time() - shootTime > 1.0/10:
+				shootTime = time.time()
+				send("S " + str(int(towerAngle)))
+	except:
+		traceback.print_exc()
+#}}}
 def handleInput(): #{{{
-	global quit, showPlayerList, my, mx, x, y, angle, towerAngle, wireframe, zoom, showConsole, cmd, scrollback
+	global quit, showPlayerList, x, y, angle, wireframe, showConsole, cmd, scrollback
 	scrollback = []
 	commands = ['']
 	cmd_index = -1
 	cmd = ''
-	zoom = 1
-	my = 0
-	mx = 0
 	t = time.time()
-	st = time.time()
+
 	while not quit:
 		try:
+			if (sys.platform != "win32"): handleMouse()
 			if not showConsole:
-				for event in pygame.event.get():
-					if event.type == MOUSEMOTION:
-						(mx, my) = event.pos
-						mx = mx - width/2
-						my = height - my - height/2
-					elif event.type == QUIT: quit = True
-					elif event.type == KEYUP:
+				for event in pygame.event.get([QUIT,KEYUP,KEYDOWN]):
+					if event.type == KEYUP:
 						if event.key == K_TAB: showPlayerList = False
 						elif event.key == K_F9: wireframe = not wireframe
 					elif event.type == KEYDOWN:
 						if event.key == K_TAB: showPlayerList = True
-						elif event.key == 167: showConsole = True
+						elif event.key == 167: showConsole = True #linux
+						elif event.key == 96: showConsole = True #windows
 						elif event.key == K_ESCAPE: quit = True
-					elif event.type == MOUSEBUTTONDOWN:
-						if event.button == 4:
-							zoom += 0.1
-							if zoom == 0: zoom = 0.1
-						elif event.button == 5:
-							zoom -= 0.1
-							if zoom == 0: zoom = -0.1
-
-				mousePressed = pygame.mouse.get_pressed()
-				if mousePressed[0]:
-					if time.time() - st > 1.0/10:
-						st = time.time()
-						send("S " + str(int(towerAngle)))
-
-				towerAngle = math.degrees(math.atan2(my - y, mx - x)) + 90
+					elif event.type == QUIT: quit = True
 
 				pressed = pygame.key.get_pressed()
 				if pressed[K_RIGHT]:
@@ -634,7 +651,7 @@ def handleInput(): #{{{
 			else:
 				pressed = pygame.key.get_pressed()
 
-				for event in pygame.event.get():
+				for event in pygame.event.get([KEYDOWN]):
 					if event.type == KEYDOWN:
 						if event.key == 167 or event.key == K_ESCAPE: showConsole = False
 						elif event.key == K_UP:
@@ -711,6 +728,7 @@ if __name__ == "__main__": #{{{
 	try:
 		time.sleep(0.1)
 		while not quit:
+			if (sys.platform == "win32"): handleMouse()
 			render()
 
 	except Exception, e:
