@@ -136,6 +136,14 @@ class Text: #{{{
 	def DrawFPS(self, fps):
 		self.Print(fps, width/2 - self.lw * len(str(fps)), height/2 - self.lh)
 #}}}
+class GameObject: #{{{
+	def __init__(self, x, y, width, height, angle):
+		self.x = x
+		self.y = y
+		self.width = width
+		self.height = height
+		self.angle = angle
+#}}}
 def send(data): #{{{
 	try:
 		sock.sendto(data + "\x00", ADDR)
