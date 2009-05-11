@@ -75,6 +75,8 @@ class Text: #{{{
 		self.lh = self.char[ord('0')][2]
 
 	def createCharacter(self, index, s):
+		letter_w = 0
+		letter_h = 0
 		try:
 			letter_render = self.font.render(s, True, (255,255,255), (0,0,0))
 			letter = pygame.image.tostring(letter_render, 'RGBA', True)
@@ -105,31 +107,45 @@ class Text: #{{{
 			glTexCoord2f(1, 0); glVertex2f(letter_w, 0)
 			glEnd()
 			glEndList()
-			
+
 		except Exception, e:
-			letter_w = 0
-			letter_h = 0
 			index = None
 
 		return (index, letter_w, letter_h)
 
 	def Print(self, s, x, y, z = -61.0, color = (1.0, 1.0, 1.0)):
 		s = str(s)
-		i = 0
-		lx = 0
 		length = len(s)
 
-		glEnable(GL_TEXTURE_2D)
-		#glColor4f(1.0, 1.0, 1.0, 1.0)
-		glColor3fv(color)
-		while i < length:
-			ch = self.char[ord(s[i])]
-			glLoadIdentity()
-			glTranslatef(x + lx, y, z)
-			if (type(ch[0]) == type(0)): glCallList(ch[0])
-			lx += ch[1]
-			i += 1
-		glDisable(GL_TEXTURE_2D)
+		if (type(self.char[ord(s[0])][0]) != type(0)): #failsafe
+			glRasterPos3f(x, y, z)
+			text_render = self.font.render(s, True, (color[0]*255, color[1]*255, color[2]*255), (0,0,0))
+			text_img = pygame.image.tostring(text_render, 'RGBA', True)
+			text_w, text_h = text_render.get_size()
+			
+			text_arr = list(text_img)
+			i = 0
+			while (i < len(text_arr)):
+				if (text_arr[i] == '\x00' and text_arr[i+1] == '\x00' and text_arr[i+2] == '\x00'):
+					text_arr[i+3] = '\x00'
+				i += 4
+			text_img = ''.join(text_arr)
+
+			glDrawPixels(text_w, text_h, GL_RGBA, GL_UNSIGNED_BYTE, text_img)
+		else:
+			i = 0
+			lx = 0
+
+			glColor3fv(color)
+			glEnable(GL_TEXTURE_2D)
+			while i < length:
+				ch = self.char[ord(s[i])]
+				glLoadIdentity()
+				glTranslatef(x + lx, y, z)
+				glCallList(ch[0])
+				lx += ch[1]
+				i += 1
+			glDisable(GL_TEXTURE_2D)
 	def createTexDL(self, texture, width, height):
 		return newList
 
