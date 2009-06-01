@@ -19,6 +19,7 @@ from pygame.locals import *
 
 from Vertex2 import *
 from Collision import *
+from GameObject import *
 #}}}
 #{{{ Globals
 HOST = 'localhost'
@@ -152,14 +153,6 @@ class Text: #{{{
 	def DrawFPS(self, fps):
 		self.Print(fps, width/2 - self.lw * len(str(fps)), height/2 - self.lh)
 #}}}
-class GameObject: #{{{
-	def __init__(self, x, y, width, height, angle):
-		self.x = x
-		self.y = y
-		self.width = width
-		self.height = height
-		self.angle = angle
-#}}}
 def send(data): #{{{
 	try:
 		sock.sendto(data + "\x00", ADDR)
@@ -208,7 +201,11 @@ def recv_data(): #{{{
 					for line in lines:
 						scrollback.insert(0, line)
 				elif c[0] == "L":
-					LEVEL = cPickle.loads(c[1:])
+					#LEVEL = cPickle.loads(c[1:])
+					tmp = cPickle.loads(c[1:])
+					LEVEL[0] = tmp[0]
+					for obj in tmp[1]:
+						LEVEL[1].insert(0, GameObject(obj['position'][0], obj['position'][1], 10.0, 10.0, 0.0, obj['type']))
 				elif c[0] == "I":
 					id = c[1:]
 				else:
@@ -316,9 +313,9 @@ def render(): #{{{
 	glMatrixMode(GL_MODELVIEW)
 
 	for obj in LEVEL[1]:
-		if obj['type'] == '#':
+		if obj.type == '#':
 			glLoadIdentity()
-			glTranslate( obj['position'][0], obj['position'][1], -60.0)
+			glTranslate(obj.position.x, obj.position.y, -60.0)
 			glBegin(GL_QUADS)
 			glColor3f(1.0, 1.0, 1.0)
 			glVertex3f(-1,1,1)
@@ -528,18 +525,15 @@ def collision(tank1x, tank1y, angle): #{{{
 	global x, y
 	tank_pos = Vertex2(tank1x, tank1y)
 	tank_size = 42.0
-	obj_size = 10.0
+	
+	a = None
 	for obj in LEVEL[1]:
-		lx, ly = obj['position']
-		obj_pos = Vertex2(lx, ly)
-		dist = tank_pos - obj_pos
-		distance = math.sqrt((dist.x * dist.x) + (dist.y * dist.y))
+		dist = tank_pos - obj.position
+		distance = (dist.x * dist.x) + (dist.y * dist.y)
 
-		if distance < tank_size/2 + obj_size/2 + 0.5:
-			a = [tank_pos, math.radians(angle), Vertex2(21.0, 10.5)]
-			b = [obj_pos, math.radians(0.0), Vertex2(5.0,5.0)]
-			collision = Intersect(a,b)
-			if collision: return True
+		if distance < (tank_size/2 + obj.size/2 + 0.5)**2:
+			if a == None: a = GameObject(tank1x, tank1y, 42.0, 21.0, angle)
+			if Intersect(a, obj): return True
 	
 	for p in PLAYERS: # Could be optimized
 		if (int(p['id']) == int(id)):
@@ -547,20 +541,16 @@ def collision(tank1x, tank1y, angle): #{{{
 			break
 	
 	for p in PLAYERS:
-		
 		if p['id'] != me['id']:
 			#tank1pos = Vertex2(me['position'][0], me['position'][1]) # Could exist some local variables
 			tank2pos = Vertex2(p['position'][0], p['position'][1])
 			dist = tank_pos - tank2pos
-			distance = math.sqrt((dist.x ** 2) + (dist.y ** 2))
+			distance = (dist.x ** 2) + (dist.y ** 2)
 			
-			if distance < tank_size:
-				a = [tank_pos, math.radians(float(me['angle'])), Vertex2(21.0, 10.5)]
-				b =[tank2pos, math.radians(float(p['angle'])), Vertex2(21.0,10.5)]
-				collision = Intersect(a,b)
-				#if collision: return True
-				#if collision: print "lol"
-				if collision:
+			if distance < tank_size ** 2:
+				if a == None: a = GameObject(tank1x, tank1y, 42.0, 21.0, angle)
+				b = GameObject(p['position'][0], p['position'][1], 42.0, 21.0, float(p['angle']))
+				if Intersect(a,b):
 					# This is so that tanks do not get stuck into each other.
 					x1, y1, x2, y2 = tank_pos.x, tank_pos.y, tank2pos.x, tank2pos.y
 					angle = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi # Get angle
