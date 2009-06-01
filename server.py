@@ -10,6 +10,7 @@ import cPickle
 import math
 from Collision import *
 from Vertex2 import *
+from GameObject import *
 #}}}
 #{{{ Globals
 width = 800
@@ -83,13 +84,13 @@ class Shot: #{{{
 		selfpos = Vertex2(self.x, self.y)
 
 		dist = pos - selfpos
-		distance = math.sqrt((dist.x * dist.x) + (dist.y * dist.y))
+		distance = (dist.x * dist.x) + (dist.y * dist.y)
 
 		size = length
 		if (width > size): size = width
-		if distance < size + self.size/2 + 0.5:
-			a = [pos, math.radians(float(angle)), Vertex2(length, width)]
-			b = [selfpos, math.radians(0.0), Vertex2(self.size, self.size)]
+		if distance < (size + self.size/2 + 0.5)**2:
+			a = GameObject(pos.x, pos.y, length, width, angle)
+			b = GameObject(self.x, self.y, self.size, self.size, 0.0)
 			collision = Intersect(a,b)
 			if (collision): return True
 	def checkCollision(self):
@@ -103,7 +104,7 @@ class Shot: #{{{
 				return True
 
 		for obj in level.data:
-			if (self.intersects(obj['position'], 0.0, 5.0, 5.0)): return True
+			if (self.intersects(obj['position'], 0.0, 10.0, 10.0)): return True
 #}}}
 def send_data(addr, message): #{{{
 	try:
