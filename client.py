@@ -208,13 +208,39 @@ def recv_data(): #{{{
 						LEVEL[1].insert(0, GameObject(obj['position'][0], obj['position'][1], 10.0, 10.0, 0.0, obj['type']))
 				elif c[0] == "I":
 					id = c[1:]
+				elif c[0] == "K":
+					# get this when someone gets killed: killer id|victim id|x|y|angle|towerangle|hitAtX|hitAtY
+					c = c[1:]
+					c = c.split("|")
+
+					killerId = c[0]
+					victimId = c[1]
+					victimX = c[2]
+					victimY = c[3]
+					victimAngle = c[4]
+					victimTowerAngle = c[5]
+					victimHitAtX = c[6]
+					victimHitAtY = c[7]
+					
+					namesFound = 0
+					for p in PLAYERS:
+						if int(p['id']) == int(killerId):
+							killerName = p['name']
+							namesFound += 1
+						if int(p['id']) == int(victimId):
+							victimName = p['name']
+							namesFound += 1
+						if namesFound == 2:
+							break
+					print killerName, " killed ", victimName
+ 
 				else:
 					lines = c.split('\n')
 					for line in lines:
 						scrollback.insert(0, line)
 					print "Received: \n", c
 
-		if time.time() - t >= 1.0/100:
+		if time.time() - t >= 1.0/30:
 			send('M ' + str(x) + ' ' + str(y) + ' ' + str(angle) + ' ' + str(int(towerAngle)))
 			t = time.time()
 #}}}
@@ -278,7 +304,7 @@ def displayPlayerList(): #{{{
 			glVertex3f(lx + 6, cly - text.lh, 0.0)
 			glEnd()
 
-		text.Print(0, tx + (5-len(str(0)))*text.lw, cly, 0.1, coly)
+		text.Print(str(p['score']), tx + (5-len(str(0)))*text.lw, cly, 0.1, coly)
 		if p['ping'] < 80: pingcolor = (0.0, 1.0, 0.0)
 		elif p['ping'] < 140: pingcolor = coly
 		else: pingcolor = (1.0, 0.0, 0.0)
@@ -611,7 +637,7 @@ def handleMouse(): #{{{
 
 		mousePressed = pygame.mouse.get_pressed()
 		if mousePressed[0]:
-			if time.time() - shootTime > 1.0/10:
+			if time.time() - shootTime > 1.0:
 				shootTime = time.time()
 				send("S " + str(int(towerAngle)))
 	except:

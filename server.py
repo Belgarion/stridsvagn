@@ -44,11 +44,17 @@ class Player: #{{{
 		self.error = (0, '')
 		self.color = (random.random(), random.random(), random.random())
 		self.hp = 100
+		self.score = 0
+
 	def getInfo(self):
-		info = {'id': self.id, 'name': self.name, 'ping': self.ping, 'position': self.position, 'angle': self.angle, 'towerAngle': self.towerAngle, 'color': self.color}
+		info = {'id': self.id, 'name': self.name, 'ping': self.ping, 'position': self.position, 'angle': self.angle, 'towerAngle': self.towerAngle, 'color': self.color, 'score': self.score}
 		return info
-	def kill(self):
+	def kill(self, killer, hitX, hitY):
 		self.spawn()
+		broadcast_data(None, "K%s|%s|%s|%s|%s|%s|%s|%s" % (killer, self.id, self.position[0], self.position[1], self.angle, self.towerAngle, hitX, hitY)) # Send to all: killer id|victim id|x|y|angle|towerangle|hitAtX|hitAtY
+		for p in PLAYERS:
+			if p.id == killer:
+				p.score = p.score + 1
 	def spawn(self):
 		newx = random.randint(-width/2 + 50, width/2 - 50)
 		newy = random.randint(-height/2 + 50, height/2 - 50)
@@ -92,7 +98,8 @@ class Shot: #{{{
 			a = GameObject(pos.x, pos.y, length, width, angle)
 			b = GameObject(self.x, self.y, self.size, self.size, 0.0)
 			collision = Intersect(a,b)
-			if (collision): return True
+			if (collision): 
+				return True
 	def checkCollision(self):
 		global PLAYERS
 		for p in PLAYERS:
@@ -100,7 +107,7 @@ class Shot: #{{{
 			if (self.intersects(p.position, p.angle, 42.0, 21.0)): 
 				p.hp -= 50
 				if (p.hp <= 0):
-					p.kill()
+					p.kill(self.ownerId, self.x, self.y)
 				return True
 
 		for obj in level.data:
@@ -154,6 +161,7 @@ def process_connection(): #{{{
 					print "Client (%s, %s) connected" % addr
 					broadcast_data(addr, "SClient (%s, %s) connected" % addr)
 			except Exception, e:
+
 				if e[0] != 11:
 					if debug: traceback.print_exc()
 			
