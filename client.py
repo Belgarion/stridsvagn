@@ -33,6 +33,7 @@ angle = 0
 towerAngle = 45
 PLAYERS = {}
 SHOTS = {}
+KILLED_TANKS = []
 speedForward = 2
 speedBackward = 2
 backgroundColor = (68, 68, 68)
@@ -209,7 +210,7 @@ def recv_data(): #{{{
 				elif c[0] == "I":
 					id = c[1:]
 				elif c[0] == "K":
-					# get this when someone gets killed: killer id|victim id|x|y|angle|towerangle|hitAtX|hitAtY
+					# get this when someone gets killed: killer id|victim id|x|y|angle|towerangle|hitAtX|hitAtY|rcolor|gcolor|bcolor
 					c = c[1:]
 					c = c.split("|")
 
@@ -222,6 +223,12 @@ def recv_data(): #{{{
 					victimHitAtX = c[6]
 					victimHitAtY = c[7]
 					
+					rcolor = float(c[8])*0.2 # make them darker
+					gcolor = float(c[9])*0.2
+					bcolor = float(c[10])*0.2
+					color = (rcolor, gcolor, bcolor) 
+					tempdict = {'position':(victimX,victimY), 'angle':victimAngle, 'towerAngle':victimTowerAngle, 'color':color}
+					KILLED_TANKS.append(tempdict)
 					namesFound = 0
 					for p in PLAYERS:
 						if int(p['id']) == int(killerId):
@@ -357,6 +364,35 @@ def render(): #{{{
 			glVertex3f(-5,-5, 0.0)
 			glEnd()
 
+	for s in SHOTS:
+		glLoadIdentity()
+                glTranslate(float(s['position'][0]), float(s['position'][1]), -60.0)
+		glRotatef(int(s['angle']), 0.0, 0.0, 1.0)
+
+		glBegin(GL_QUADS)
+		glColor3fv(s['color'])
+                glVertex3f(-1, 2, 0.0)
+                glVertex3f( 1, 2, 0.0)
+                glVertex3f( 1,-2, 0.0)
+		glVertex3f(-1,-2, 0.0)
+		glEnd()
+
+	for k in KILLED_TANKS:
+		#tank
+		glLoadIdentity()
+		glTranslate(float(k['position'][0]), float(k['position'][1]), -60.0)
+                glRotatef(int(k['angle']), 0.0, 0.0, 1.0)
+		glColor3fv(k['color'])
+		glCallList(tl)
+
+                #tower                                                                                              
+		glLoadIdentity()
+	        glTranslate(float(k['position'][0]), float(k['position'][1]), -60.0)
+		glRotatef(float(k['towerAngle']), 0.0, 0.0, 1.0)
+		glColor3f(0.0, 0.2, 0.0)
+                glCallList(tower)
+
+
 	playerslock.acquire()
 	for p in PLAYERS:
 		#tank
@@ -373,19 +409,6 @@ def render(): #{{{
 		glColor3f(0.0, 0.6, 0.0)
 		glCallList(tower)
 	playerslock.release()
-
-	for s in SHOTS:
-		glLoadIdentity()
-		glTranslate(float(s['position'][0]), float(s['position'][1]), -60.0)
-		glRotatef(int(s['angle']), 0.0, 0.0, 1.0)
-
-		glBegin(GL_QUADS)
-		glColor3fv(s['color'])
-		glVertex3f(-1, 2, 0.0)
-		glVertex3f( 1, 2, 0.0)
-		glVertex3f( 1,-2, 0.0)
-		glVertex3f(-1,-2, 0.0)
-		glEnd()
 
 	for d in DOTS:
 		glDot(d)

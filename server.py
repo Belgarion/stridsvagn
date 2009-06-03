@@ -50,8 +50,9 @@ class Player: #{{{
 		info = {'id': self.id, 'name': self.name, 'ping': self.ping, 'position': self.position, 'angle': self.angle, 'towerAngle': self.towerAngle, 'color': self.color, 'score': self.score}
 		return info
 	def kill(self, killer, hitX, hitY):
+		broadcast_data(None, "K%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % (killer, self.id, self.position[0], self.position[1], self.angle, self.towerAngle, hitX, hitY, self.color[0], self.color[1], self.color[2])) # Send to all: killer id|victim id|x|y|angle|towerangle|hitAtX|hitAtY|rcolor|gcolor|bcolor
 		self.spawn()
-		broadcast_data(None, "K%s|%s|%s|%s|%s|%s|%s|%s" % (killer, self.id, self.position[0], self.position[1], self.angle, self.towerAngle, hitX, hitY)) # Send to all: killer id|victim id|x|y|angle|towerangle|hitAtX|hitAtY
+
 		for p in PLAYERS:
 			if p.id == killer:
 				p.score = p.score + 1
