@@ -97,7 +97,7 @@ class Shot: #{{{
 		global PLAYERS
 		for p in PLAYERS:
 			if p.id == self.ownerId: continue
-			if (self.intersects(p.position, p.angle, 21.0, 10.5)): 
+			if (self.intersects(p.position, p.angle, 42.0, 21.0)): 
 				p.hp -= 50
 				if (p.hp <= 0):
 					p.kill()

@@ -547,7 +547,7 @@ def collision(tank1x, tank1y, angle): #{{{
 			dist = tank_pos - tank2pos
 			distance = (dist.x ** 2) + (dist.y ** 2)
 			
-			if distance < tank_size ** 2:
+			if distance < (tank_size*2) ** 2:
 				if a == None: a = GameObject(tank1x, tank1y, 42.0, 21.0, angle)
 				b = GameObject(p['position'][0], p['position'][1], 42.0, 21.0, float(p['angle']))
 				if Intersect(a,b):

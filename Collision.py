@@ -7,7 +7,7 @@ def Intersect(obj1, obj2): #{{{
 	hw = Width/2 #half width
 	Height = obj1.height
 	hh = Height/2 #half height
-	A = math.radians(obj1.angle)
+	A = math.radians(float(obj1.angle))
 	sina = math.sin(A)
 	cosa = math.cos(A)
 
