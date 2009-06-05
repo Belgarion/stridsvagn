@@ -36,7 +36,7 @@ class Player: #{{{
 	def __init__(self, addr, id):
 		self.addr = addr
 		self.id = id
-		self.position = (0,0)
+		self.position = Vertex2(0,0)
 		self.angle = 0
 		self.towerAngle = 0
 		self.name = "Player (%d)" % id
@@ -48,6 +48,7 @@ class Player: #{{{
 		self.hp = 100
 		self.score = 0
 		self.kills = 0
+		self.obj = GameObject(self.position.x, self.position.y, 42.0, 21.0, self.angle)
 
 	def getInfo(self):
 		info = {'id': self.id, 'name': self.name, 'ping': self.ping, 'position': self.position, 'angle': self.angle, 'towerAngle': self.towerAngle, 'color': self.color, 'score': self.score, 'kills': self.kills}
@@ -86,6 +87,7 @@ class Shot: #{{{
 		self.color = color
 		self.size = 1.0
 		self.ownerId = ownerId
+		self.obj = GameObject(self.x, self.y, self.size, self.size, self.angle)
 	def getInfo(self):
 		info = {'position': (self.x, self.y), 'angle': self.angle, 'color': self.color}
 		return info
@@ -98,33 +100,37 @@ class Shot: #{{{
 		if self.x < -400 or self.x > 400 or self.y < -300 or self.y > 300 or self.checkCollision():
 			self.erase = True
 
-	def intersects(self, (x, y), angle, length, width):
-		pos = Vertex2(x, y)
-		selfpos = Vertex2(self.x, self.y)
+	#def intersects(self, (x, y), angle, length, width):
+	def intersects(self, obj2):
+		if CheckCollision(self.obj, obj2): return True
+		#pos = Vertex2(x, y)
+		#selfpos = Vertex2(self.x, self.y)
 
-		dist = pos - selfpos
-		distance = (dist.x * dist.x) + (dist.y * dist.y)
+		#dist = pos - selfpos
+		#distance = (dist.x * dist.x) + (dist.y * dist.y)
 
-		size = length
-		if (width > size): size = width
-		if distance < (size + self.size/2 + 0.5)**2:
-			a = GameObject(pos.x, pos.y, length, width, angle)
-			b = GameObject(self.x, self.y, self.size, self.size, 0.0)
-			collision = Intersect(a,b)
-			if (collision): 
-				return True
+		#size = length
+		#if (width > size): size = width
+		#if distance < (size + self.size/2 + 0.5)**2:
+		#	a = GameObject(pos.x, pos.y, length, width, angle)
+		#	b = GameObject(self.x, self.y, self.size, self.size, 0.0)
+		#	collision = Intersect(a,b)
+		#	if (collision): 
+		#		return True
 	def checkCollision(self):
 		global PLAYERS
 		for p in PLAYERS:
 			if p.id == self.ownerId: continue
-			if (self.intersects(p.position, p.angle, 42.0, 21.0)): 
+			#if (self.intersects(p.position, p.angle, 42.0, 21.0)): 
+			if (self.intersects(p.obj)):
 				p.hp -= 50
 				if (p.hp <= 0):
 					p.kill(self.ownerId, self.x, self.y)
 				return True
 
-		for obj in level.data:
-			if (self.intersects(obj['position'], 0.0, 10.0, 10.0)): return True
+		for obj in level.objs:
+			#if (self.intersects(obj['position'], 0.0, 10.0, 10.0)): return True
+			if self.intersects(obj): return True
 #}}}
 def send_data(addr, message): #{{{
 	try:
@@ -174,8 +180,9 @@ def process_connection(): #{{{
 					print "Client (%s, %s) connected" % addr
 					broadcast_data(addr, "SClient (%s, %s) connected" % addr)
 			except Exception, e:
+				pass
 
-				if e[0] != 11:
+				if e[0] != 11 and e[0] != 10035:
 					if debug: traceback.print_exc()
 			
 			dead_sockets = []

@@ -23,4 +23,9 @@ class Vertex2: # {{{
 		return Vertex2(self.x*inverse_magnitude, self.y*inverse_magnitude)
 	def perpendicular(self):
 		return Vertex2(-self.y, self.x)
+	def __getitem__(self, key):
+		if key == 0:
+			return self.x
+		elif key == 1:
+			return self.y
 #}}}

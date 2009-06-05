@@ -40,11 +40,15 @@ backgroundColor = (68, 68, 68)
 fps = 0
 scrollback = []
 id = 0
-LEVEL = ['', []]
 DOTS= [] #debug-dots
 zoom = 1
 (mx, my) = (0,0)
 shootTime = time.time()
+#}}}
+class Level: #{{{
+	def __init__(self, name, objs):
+		self.name = name
+		self.objs = objs
 #}}}
 def glDot(v, color = []): #{{{
 	glLoadIdentity()
@@ -202,11 +206,11 @@ def recv_data(): #{{{
 					for line in lines:
 						scrollback.insert(0, line)
 				elif c[0] == "L":
-					#LEVEL = cPickle.loads(c[1:])
 					tmp = cPickle.loads(c[1:])
-					LEVEL[0] = tmp[0]
+					objs = []
 					for obj in tmp[1]:
-						LEVEL[1].insert(0, GameObject(obj['position'][0], obj['position'][1], 10.0, 10.0, 0.0, obj['type']))
+						objs.insert(0, GameObject(obj['position'][0], obj['position'][1], 10.0, 10.0, 0.0, obj['type']))
+					LEVEL = Level(tmp[0], objs)
 				elif c[0] == "I":
 					id = c[1:]
 				elif c[0] == "K":
@@ -335,7 +339,7 @@ def render(): #{{{
 	glOrtho((-width/2)*zoom, (width/2)*zoom, (-height/2)*zoom, (height/2)*zoom, -1.0, 100.0)
 	glMatrixMode(GL_MODELVIEW)
 
-	for obj in LEVEL[1]:
+	for obj in LEVEL.objs:
 		if obj.type == '#':
 			glLoadIdentity()
 			glTranslate(obj.position.x, obj.position.y, -60.0)
@@ -565,40 +569,48 @@ def collision(tank1x, tank1y, angle): #{{{
 	tank_pos = Vertex2(tank1x, tank1y)
 	tank_size = 42.0
 	
-	a = None
-	for obj in LEVEL[1]:
-		dist = tank_pos - obj.position
-		distance = (dist.x * dist.x) + (dist.y * dist.y)
-
-		if distance < (tank_size/2 + obj.size/2 + 0.5)**2:
-			if a == None: a = GameObject(tank1x, tank1y, 42.0, 21.0, angle)
-			if Intersect(a, obj): return True
+	a = GameObject(tank1x, tank1y, 42.0, 21.0, angle)
+	if CheckCollision(a, LEVEL.objs): return True
 	
 	for p in PLAYERS: # Could be optimized
 		if (int(p['id']) == int(id)):
 			me = p
 			break
 	
+	p2 = []
 	for p in PLAYERS:
-		if p['id'] != me['id']:
-			#tank1pos = Vertex2(me['position'][0], me['position'][1]) # Could exist some local variables
-			tank2pos = Vertex2(p['position'][0], p['position'][1])
-			dist = tank_pos - tank2pos
-			distance = (dist.x ** 2) + (dist.y ** 2)
-			
-			if distance < (tank_size*2) ** 2:
-				if a == None: a = GameObject(tank1x, tank1y, 42.0, 21.0, angle)
-				b = GameObject(p['position'][0], p['position'][1], 42.0, 21.0, float(p['angle']))
-				if Intersect(a,b):
-					# This is so that tanks do not get stuck into each other.
-					x1, y1, x2, y2 = tank_pos.x, tank_pos.y, tank2pos.x, tank2pos.y
-					angle = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi # Get angle
-					x -= math.sin(math.radians(angle+90)) * speedForward # NOTE: speedForward could be wrong here. It is more the rotating speed maybe.
-					y += math.cos(math.radians(angle+90)) * speedForward
-					
-					return True
-			
-	
+		if p['id'] == me['id']:
+			continue
+		p2.append(GameObject(p['position'][0], p['position'][1], 42.0, 21.0, p['angle']))
+
+#	for p in PLAYERS:
+#		if p['id'] != me['id']:
+#			#tank1pos = Vertex2(me['position'][0], me['position'][1]) # Could exist some local variables
+#			tank2pos = Vertex2(p['position'][0], p['position'][1])
+#			dist = tank_pos - tank2pos
+#			distance = (dist.x ** 2) + (dist.y ** 2)
+#			
+#			if distance < (tank_size*2) ** 2:
+#				if a == None: a = GameObject(tank1x, tank1y, 42.0, 21.0, angle)
+#				b = GameObject(p['position'][0], p['position'][1], 42.0, 21.0, float(p['angle']))
+#				if Intersect(a,b):
+#					# This is so that tanks do not get stuck into each other.
+#					x1, y1, x2, y2 = tank_pos.x, tank_pos.y, tank2pos.x, tank2pos.y
+#					angle = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi # Get angle
+#					x -= math.sin(math.radians(angle+90)) * speedForward # NOTE: speedForward could be wrong here. It is more the rotating speed maybe.
+#					y += math.cos(math.radians(angle+90)) * speedForward
+#					
+#					return True
+	if CheckCollision(a, p2):
+	#if False:
+		# This is so that tanks do not get stuck into each other.
+		tank2pos = Vertex2(p['position'][0], p['position'][1])
+		x1, y1, x2, y2 = tank_pos.x, tank_pos.y, tank2pos.x, tank2pos.y
+		angle = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi # Get angle
+		x -= math.sin(math.radians(angle+90)) * speedForward # NOTE: speedForward could be wrong here. It is more the rotating speed maybe.
+		y += math.cos(math.radians(angle+90)) * speedForward
+		
+		return True
 
 	return False
 #}}}
@@ -754,6 +766,7 @@ if __name__ == "__main__": #{{{
 	height = 600
 	quit = False
 	nick = 'Player'
+	LEVEL = Level('', [])
 
 	showPlayerList = False
 	showConsole = False
