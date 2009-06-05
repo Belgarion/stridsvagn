@@ -211,24 +211,14 @@ def recv_data(): #{{{
 					id = c[1:]
 				elif c[0] == "K":
 					# get this when someone gets killed: killer id|victim id|x|y|angle|towerangle|hitAtX|hitAtY|rcolor|gcolor|bcolor
-					c = c[1:]
-					c = c.split("|")
+					tmp = cPickle.loads(c[1:])
 
-					killerId = c[0]
-					victimId = c[1]
-					victimX = c[2]
-					victimY = c[3]
-					victimAngle = c[4]
-					victimTowerAngle = c[5]
-					victimHitAtX = c[6]
-					victimHitAtY = c[7]
+					killerId = tmp[0]
+					victimId = tmp[1]
+					victimHitAtX = c[2]
+					victimHitAtY = c[3]
 					
-					rcolor = float(c[8])*0.2 # make them darker
-					gcolor = float(c[9])*0.2
-					bcolor = float(c[10])*0.2
-					color = (rcolor, gcolor, bcolor) 
-					tempdict = {'position':(victimX,victimY), 'angle':victimAngle, 'towerAngle':victimTowerAngle, 'color':color}
-					KILLED_TANKS.append(tempdict)
+					KILLED_TANKS.append(tmp[4])
 					namesFound = 0
 					for p in PLAYERS:
 						if int(p['id']) == int(killerId):
@@ -323,7 +313,7 @@ def displayPlayerList(): #{{{
 		i+= 1
 		cly -= text.lh
 
-		text.Print(0, tx + (5-len(str(0)))*text.lw, cly, 0.1, colgr)
+		text.Print(str(p['kills']), tx + (5-len(str(0)))*text.lw, cly, 0.1, colgr)
 		text.Print("0%", tx + (16-len(str(0)+"%"))*text.lw, cly, 0.1)
 #}}}
 
@@ -366,14 +356,14 @@ def render(): #{{{
 
 	for s in SHOTS:
 		glLoadIdentity()
-                glTranslate(float(s['position'][0]), float(s['position'][1]), -60.0)
+		glTranslate(float(s['position'][0]), float(s['position'][1]), -60.0)
 		glRotatef(int(s['angle']), 0.0, 0.0, 1.0)
 
 		glBegin(GL_QUADS)
 		glColor3fv(s['color'])
-                glVertex3f(-1, 2, 0.0)
-                glVertex3f( 1, 2, 0.0)
-                glVertex3f( 1,-2, 0.0)
+		glVertex3f(-1, 2, 0.0)
+		glVertex3f( 1, 2, 0.0)
+		glVertex3f( 1,-2, 0.0)
 		glVertex3f(-1,-2, 0.0)
 		glEnd()
 
@@ -381,16 +371,16 @@ def render(): #{{{
 		#tank
 		glLoadIdentity()
 		glTranslate(float(k['position'][0]), float(k['position'][1]), -60.0)
-                glRotatef(int(k['angle']), 0.0, 0.0, 1.0)
+		glRotatef(int(k['angle']), 0.0, 0.0, 1.0)
 		glColor3fv(k['color'])
 		glCallList(tl)
 
-                #tower                                                                                              
+		#tower
 		glLoadIdentity()
-	        glTranslate(float(k['position'][0]), float(k['position'][1]), -60.0)
+		glTranslate(float(k['position'][0]), float(k['position'][1]), -60.0)
 		glRotatef(float(k['towerAngle']), 0.0, 0.0, 1.0)
 		glColor3f(0.0, 0.2, 0.0)
-                glCallList(tower)
+		glCallList(tower)
 
 
 	playerslock.acquire()

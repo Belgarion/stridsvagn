@@ -21,12 +21,14 @@ class Level: #{{{
 		f = open(filename)
 		d = f.read()
 		e = d.split("\n")
-		objs = []
+		self.data = []
+		self.objs = []
 		for i in range(len(e)):
 			for j in range(len(e[i])):
 				if e[i][j] != ' ':
-					objs.append( {'position': ((j+0.5)*10-width/2, height/2-(i-0.5)*10 -10), 'type': e[i][j]} )
-		self.data = objs
+					tmp = GameObject( (j+0.5)*10-width/2, height/2-(i-0.5)*10 -10, 10.0, 10.0, 0.0, e[i][j])
+					self.data.append( {'position': ((j+0.5)*10-width/2, height/2-(i-0.5)*10 -10), 'type': e[i][j]} )
+					self.objs.append(tmp)
 		f.close()
 		self.filename = filename
 #}}}
@@ -45,17 +47,27 @@ class Player: #{{{
 		self.color = (random.random(), random.random(), random.random())
 		self.hp = 100
 		self.score = 0
+		self.kills = 0
 
 	def getInfo(self):
-		info = {'id': self.id, 'name': self.name, 'ping': self.ping, 'position': self.position, 'angle': self.angle, 'towerAngle': self.towerAngle, 'color': self.color, 'score': self.score}
+		info = {'id': self.id, 'name': self.name, 'ping': self.ping, 'position': self.position, 'angle': self.angle, 'towerAngle': self.towerAngle, 'color': self.color, 'score': self.score, 'kills': self.kills}
 		return info
+
 	def kill(self, killer, hitX, hitY):
-		broadcast_data(None, "K%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % (killer, self.id, self.position[0], self.position[1], self.angle, self.towerAngle, hitX, hitY, self.color[0], self.color[1], self.color[2])) # Send to all: killer id|victim id|x|y|angle|towerangle|hitAtX|hitAtY|rcolor|gcolor|bcolor
+		color = (self.color[0] * 0.2, self.color[1] * 0.2, self.color[2] * 0.2)
+		tempdict = {'position':self.position, 'angle':self.angle, 'towerAngle':self.towerAngle, 'color':color}
+		a = cPickle.dumps( (killer, self.id, hitX, hitY, tempdict) )
+		broadcast_data(None, "K%s" % a)
 		self.spawn()
+
+		self.score -= 1
 
 		for p in PLAYERS:
 			if p.id == killer:
-				p.score = p.score + 1
+				p.score += 1
+				p.kills += 1
+				break
+
 	def spawn(self):
 		newx = random.randint(-width/2 + 50, width/2 - 50)
 		newy = random.randint(-height/2 + 50, height/2 - 50)
