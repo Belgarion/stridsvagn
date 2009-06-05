@@ -583,26 +583,7 @@ def collision(tank1x, tank1y, angle): #{{{
 			continue
 		p2.append(GameObject(p['position'][0], p['position'][1], 42.0, 21.0, p['angle']))
 
-#	for p in PLAYERS:
-#		if p['id'] != me['id']:
-#			#tank1pos = Vertex2(me['position'][0], me['position'][1]) # Could exist some local variables
-#			tank2pos = Vertex2(p['position'][0], p['position'][1])
-#			dist = tank_pos - tank2pos
-#			distance = (dist.x ** 2) + (dist.y ** 2)
-#			
-#			if distance < (tank_size*2) ** 2:
-#				if a == None: a = GameObject(tank1x, tank1y, 42.0, 21.0, angle)
-#				b = GameObject(p['position'][0], p['position'][1], 42.0, 21.0, float(p['angle']))
-#				if Intersect(a,b):
-#					# This is so that tanks do not get stuck into each other.
-#					x1, y1, x2, y2 = tank_pos.x, tank_pos.y, tank2pos.x, tank2pos.y
-#					angle = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi # Get angle
-#					x -= math.sin(math.radians(angle+90)) * speedForward # NOTE: speedForward could be wrong here. It is more the rotating speed maybe.
-#					y += math.cos(math.radians(angle+90)) * speedForward
-#					
-#					return True
 	if CheckCollision(a, p2):
-	#if False:
 		# This is so that tanks do not get stuck into each other.
 		tank2pos = Vertex2(p['position'][0], p['position'][1])
 		x1, y1, x2, y2 = tank_pos.x, tank_pos.y, tank2pos.x, tank2pos.y

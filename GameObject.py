@@ -10,4 +10,8 @@ class GameObject: #{{{
 			self.size = width
 		else:
 			self.size = height
+
+	def setpos(self, x, y):
+		self.position.x = x
+		self.position.y = y
 #}}}

@@ -89,7 +89,7 @@ class Shot: #{{{
 		self.ownerId = ownerId
 		self.obj = GameObject(self.x, self.y, self.size, self.size, self.angle)
 	def getInfo(self):
-		info = {'position': (self.x, self.y), 'angle': self.angle, 'color': self.color}
+		info = {'position': (self.obj.position.x, self.obj.position.y), 'angle': self.angle, 'color': self.color}
 		return info
 	def update(self):
 		self.lastmove = time.time()
@@ -97,31 +97,18 @@ class Shot: #{{{
 		self.x += math.sin(math.radians(self.angle)) * self.speed
 		self.y -= math.cos(math.radians(self.angle)) * self.speed
 
+		self.obj.setpos(self.x, self.y)
+
 		if self.x < -400 or self.x > 400 or self.y < -300 or self.y > 300 or self.checkCollision():
 			self.erase = True
 
 	#def intersects(self, (x, y), angle, length, width):
 	def intersects(self, obj2):
 		if CheckCollision(self.obj, obj2): return True
-		#pos = Vertex2(x, y)
-		#selfpos = Vertex2(self.x, self.y)
-
-		#dist = pos - selfpos
-		#distance = (dist.x * dist.x) + (dist.y * dist.y)
-
-		#size = length
-		#if (width > size): size = width
-		#if distance < (size + self.size/2 + 0.5)**2:
-		#	a = GameObject(pos.x, pos.y, length, width, angle)
-		#	b = GameObject(self.x, self.y, self.size, self.size, 0.0)
-		#	collision = Intersect(a,b)
-		#	if (collision): 
-		#		return True
 	def checkCollision(self):
 		global PLAYERS
 		for p in PLAYERS:
 			if p.id == self.ownerId: continue
-			#if (self.intersects(p.position, p.angle, 42.0, 21.0)): 
 			if (self.intersects(p.obj)):
 				p.hp -= 50
 				if (p.hp <= 0):
@@ -129,7 +116,6 @@ class Shot: #{{{
 				return True
 
 		for obj in level.objs:
-			#if (self.intersects(obj['position'], 0.0, 10.0, 10.0)): return True
 			if self.intersects(obj): return True
 #}}}
 def send_data(addr, message): #{{{
@@ -253,12 +239,14 @@ def process_connection(): #{{{
 							if x < -(width/2) or x > width/2 or y < -(height/2) or y > height/2:
 								pass
 							else:
-								player.position = (x, y)
+								player.position = Vertex2(x, y)
+								player.obj.position = player.position
+								player.obj.angle = angle
 								player.angle = angle
 								player.towerAngle = towerAngle
 						elif data[0] == 'S': #shoot <angle>
 							angle = int(data[2:])
-							SHOTS.append(Shot(player.position,angle, player.color, player.id))
+							SHOTS.append(Shot(player.obj.position, angle, player.color, player.id))
 						elif data[0] == 'G': #get
 							if data[1] == 'L': #get level
 								sock.sendto("L" + cPickle.dumps((level.filename, level.data))+"\x00", player.addr)
