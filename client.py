@@ -570,7 +570,8 @@ def collision(tank1x, tank1y, angle): #{{{
 	tank_size = 42.0
 	
 	a = GameObject(tank1x, tank1y, 42.0, 21.0, angle)
-	if CheckCollision(a, LEVEL.objs): return True
+	(obj1, obj2) = CheckCollision(a, LEVEL.objs)
+	if obj1 != None: return True
 	
 	for p in PLAYERS: # Could be optimized
 		if (int(p['id']) == int(id)):
@@ -583,9 +584,10 @@ def collision(tank1x, tank1y, angle): #{{{
 			continue
 		p2.append(GameObject(p['position'][0], p['position'][1], 42.0, 21.0, p['angle']))
 
-	if CheckCollision(a, p2):
+	(obj1, obj2) = CheckCollision(a, p2)
+	if obj2 != None:
 		# This is so that tanks do not get stuck into each other.
-		tank2pos = Vertex2(p['position'][0], p['position'][1])
+		tank2pos = obj2.position
 		x1, y1, x2, y2 = tank_pos.x, tank_pos.y, tank2pos.x, tank2pos.y
 		angle = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi # Get angle
 		x -= math.sin(math.radians(angle+90)) * speedForward # NOTE: speedForward could be wrong here. It is more the rotating speed maybe.

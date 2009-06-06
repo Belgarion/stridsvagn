@@ -104,7 +104,8 @@ class Shot: #{{{
 
 	#def intersects(self, (x, y), angle, length, width):
 	def intersects(self, obj2):
-		if CheckCollision(self.obj, obj2): return True
+		(o1, o2) = CheckCollision(self.obj, obj2)
+		if o1 != None: return True
 	def checkCollision(self):
 		global PLAYERS
 		for p in PLAYERS:
