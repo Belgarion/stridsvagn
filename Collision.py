@@ -46,10 +46,8 @@ def CheckCollision(arr1, arr2): #{{{
 		for obj2 in arr2:
 			dist = obj1.position - obj2.position
 			distance = (dist.x ** 2) + (dist.y ** 2)
-			print "Distance: %d :: sizes: %d" % (distance, (obj1.size/2 + obj2.size/2 + 0.5) ** 2)
 
 			if distance < (obj1.size/2 + obj2.size/2 + 0.5) ** 2:
-				print "close enough"
 				if Intersect(obj1, obj2): return True
 
 	return False

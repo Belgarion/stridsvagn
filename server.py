@@ -142,6 +142,9 @@ def process_connection(): #{{{
 
 	try:
 		pid = 0
+
+		last_player_broadcast = 0
+		last_shots_broadcast = 0
 		while 1:
 			recvd = ''
 			time.sleep(0.001)
@@ -178,20 +181,24 @@ def process_connection(): #{{{
 			for p in PLAYERS:
 				PL.append(p.getInfo())
 
-			try:
-				broadcast_data(None, 'GPA' + cPickle.dumps(PL))
-			except:
-				if debug: traceback.print_exc()
+			if time.time() - last_player_broadcast > 1.0/30:
+				last_player_broadcast = time.time()
+				try:
+					broadcast_data(None, 'GPA' + cPickle.dumps(PL))
+				except:
+					if debug: traceback.print_exc()
 
 
-			SH = []
-			for s in SHOTS:
-				SH.append(s.getInfo())
+			if time.time() - last_shots_broadcast > 1.0/30:
+				last_shots_broadcast = time.time()
+				SH = []
+				for s in SHOTS:
+					SH.append(s.getInfo())
 
-			try:
-				broadcast_data(None, 'GPS' + cPickle.dumps(SH))
-			except:
-				if debug: traceback.print_exc()
+				try:
+					broadcast_data(None, 'GPS' + cPickle.dumps(SH))
+				except:
+					if debug: traceback.print_exc()
 
 
 			for player in PLAYERS:
