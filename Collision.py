@@ -44,6 +44,9 @@ def CheckCollision(arr1, arr2): #{{{
 
 	for obj1 in arr1:
 		for obj2 in arr2:
+			if obj1 == obj2: # Do not check collision with itself
+				continue
+
 			dist = obj1.position - obj2.position
 			distance = (dist.x ** 2) + (dist.y ** 2)
 
