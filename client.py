@@ -31,6 +31,7 @@ y = 0
 wireframe = False
 angle = 0
 towerAngle = 45
+futureTowerAngle = 45
 PLAYERS = {}
 SHOTS = {}
 KILLED_TANKS = []
@@ -324,7 +325,7 @@ def displayPlayerList(): #{{{
 frames = 0
 t = time.time()
 def render(): #{{{
-	global t, frames, fps
+	global t, frames, fps, towerAngle, futureTowerAngle
 	
 	if wireframe:
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
@@ -416,6 +417,23 @@ def render(): #{{{
 	glEnd()
 
 	text.DrawFPS("FPS: %d" % fps)
+
+
+	twrAng = towerAngle + 90
+	futTwrAng = futureTowerAngle + 90
+	diffAng = futTwrAng - twrAng
+	print "#######################################"
+	print "futureTowerAngle: ", futTwrAng
+	print "towerAngle: ", twrAng
+	print "diffangle: ", diffAng
+	print "#######################################"
+	seconds = time.time() - t
+	if seconds >= 1/30:
+		if diffAng > 1:
+			diffAng = 1
+		if diffAng < -1:
+			diffAng = -1
+		towerAngle += diffAng
 
 	if showPlayerList: displayPlayerList()
 	if showConsole: displayConsole()
@@ -619,7 +637,7 @@ def rotate(direction): #{{{
 
 #}}}
 def handleMouse(): #{{{
-	global showConsole, mx, my, towerAngle, zoom, shootTime
+	global showConsole, mx, my, towerAngle, futureTowerAngle, zoom, shootTime
 
 	if showConsole: return
 
@@ -637,7 +655,8 @@ def handleMouse(): #{{{
 					zoom -= 0.1
 					if zoom == 0: zoom = -0.1
 
-		towerAngle = math.degrees(math.atan2(my - y, mx - x)) + 90
+		futureTowerAngle = math.degrees(math.atan2(my - y, mx - x)) + 90
+		
 
 		mousePressed = pygame.mouse.get_pressed()
 		if mousePressed[0]:
