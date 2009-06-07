@@ -809,7 +809,6 @@ if __name__ == "__main__": #{{{
 	thread.start_new_thread(send_data, ())
 	playerslock = thread.allocate_lock()
 
-	pygame.init()
 	pygame.display.init()
 	screen = pygame.display.set_mode((width, height), HWSURFACE | HWPALETTE | OPENGL | DOUBLEBUF)
 	pygame.display.set_caption("Stridsvagn")

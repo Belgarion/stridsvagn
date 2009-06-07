@@ -57,7 +57,7 @@ class Player: #{{{
 
 	def kill(self, killer, hitX, hitY):
 		color = (self.color[0] * 0.2, self.color[1] * 0.2, self.color[2] * 0.2)
-		tempdict = {'position':self.position, 'angle':self.angle, 'towerAngle':self.towerAngle, 'color':color}
+		tempdict = {'position':(self.position.x, self.position.y), 'angle':self.angle, 'towerAngle':self.towerAngle, 'color':color}
 		a = cPickle.dumps( (killer, self.id, hitX, hitY, tempdict) )
 		broadcast_data(None, "K%s" % a)
 		KILLED_TANKS.append(tempdict)
