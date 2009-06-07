@@ -170,9 +170,11 @@ def send(data): #{{{
 def recv_data(): #{{{
 	global PLAYERS, SHOTS, LEVEL, scrollback, x, y, id
 	t = time.time()
+	buf = ''
 	while not quit:
 		try:
 			recv_data = sock.recv(BUFSIZ)
+			buf += recv_data
 		except:
 			print "Server closed connection, thread exiting"
 			thread.interrupt_main()
@@ -183,7 +185,13 @@ def recv_data(): #{{{
 			thread.interrupt_main()
 			break
 		else:
-			commands = recv_data.split("\x00")
+			commands = []
+			while len(buf) > 0:
+				index = buf.find("\x00")
+				if index == -1: break
+				commands.append(buf[:index])
+				buf = buf[index+1:]
+
 			for c in commands:
 				if len(c) == 0:
 					continue

@@ -132,7 +132,17 @@ class Shot: #{{{
 #}}}
 def send_data(addr, message): #{{{
 	try:
-		sock.sendto(message + "\x00", addr)
+		packet = (message + "\x00")
+		if len(packet) > 65500: #split packet
+			p = []
+			while len(packet) > 0:
+				p.append(packet[:65500])
+				packet = packet[65500:]
+
+			for i in p:
+				sock.sendto(i, addr)
+		else:
+			sock.sendto(packet, addr)
 	except:
 		if debug: traceback.print_exec()
 #}}}
@@ -143,7 +153,7 @@ def broadcast_data(addr, message): #{{{
 	try:
 		for player in PLAYERS:
 			if player.addr != addr:
-				sock.sendto(message + "\x00", player.addr)
+				send_data(player.addr, message)
 	except:
 		if debug: traceback.print_exc()
 	#finally:
@@ -176,7 +186,7 @@ def process_connection(): #{{{
 				if recvd[0] == 'C':
 					print "PID: %d" % pid
 					PLAYERS.append(Player(addr, pid))
-					sock.sendto("I" + str(pid), addr)
+					send_data(addr, "I" + str(pid))
 					pid += 1
 					print "Client (%s, %s) connected" % addr
 					broadcast_data(addr, "SClient (%s, %s) connected" % addr)
@@ -225,7 +235,7 @@ def process_connection(): #{{{
 					player.lastping = time.time()
 					player.pingpong = ( int(random.random()*100000), time.time() )
 					try:
-						sock.sendto("P%d\x00"%player.pingpong[0], addr)
+						send_data(addr, "P%d" % player.pingpong[0])
 					except:
 						if debug: traceback.print_exc()
 						player.error = sys.exc_info()[1]
@@ -246,11 +256,9 @@ def process_connection(): #{{{
 							quit = 1
 						elif data[0] == 'P': #pong
 							if int(data[1:]) != player.pingpong[0]: 
-								sock.sendto('wrong ping reply (' + data[1:] + ') should be ' + str(player.pingpong[0]) + '\x00', player.addr)
-								#quit = 1
+								send_data(player.addr, 'wrong ping reply (' + data[1:] + ') should be ' + str(player.pingpong[0]))
 							else:
 								player.ping = int((time.time() - player.pingpong[1])*1000)
-								#print player.ping
 						elif data[0] == 'M': #move <x> <y> <angle> <towerAngle>
 							(x, y, angle, towerAngle) = data[2:].split(' ')
 							x = float(x)
@@ -268,7 +276,8 @@ def process_connection(): #{{{
 							SHOTS.append(Shot(player.obj.position, angle, player.color, player.id))
 						elif data[0] == 'G': #get
 							if data[1] == 'L': #get level
-								sock.sendto("L" + cPickle.dumps((level.filename, level.data))+"\x00", player.addr)
+								packet = ("L" + cPickle.dumps( (level.filename, level.data) ))
+								send_data(player.addr, packet)
 						elif data[0] == '\\':
 							(command, sep, args) = data[1:].partition(' ')
 							if command == 'quit':
@@ -283,11 +292,11 @@ def process_connection(): #{{{
 								for p in PLAYERS:
 									pl += "\n" + str(p.id) + "    " + p.name + "   " + str(p.ping)
 
-								sock.sendto("S" + pl+"\x00", player.addr)
+								send_data(player.addr, "S" + pl)
 								print command
 						else:
 							print data
-							sock.sendto('echoed:' + data + "\x00", addr)
+							send_data(addr, 'echoed:' + data)
 
 						if quit == 1:
 							dead_sockets.append(player)
