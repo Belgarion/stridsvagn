@@ -624,7 +624,7 @@ def handleMouse(): #{{{
 	if showConsole: return
 
 	try:
-		for event in pygame.event.get([MOUSEMOTION,MOUSEBUTTONDOWN]):
+		for event in pygame.event.get([MOUSEMOTION,MOUSEBUTTONDOWN,MOUSEBUTTONUP]):
 			if event.type == MOUSEMOTION:
 				(mx, my) = event.pos
 				mx = mx - width/2
@@ -658,8 +658,12 @@ def handleInput(): #{{{
 	while not quit:
 		try:
 			if (sys.platform != "win32"): handleMouse()
+
+			for event in pygame.event.get([QUIT]):
+				quit = True
+
 			if not showConsole:
-				for event in pygame.event.get([QUIT,KEYUP,KEYDOWN]):
+				for event in pygame.event.get([KEYUP,KEYDOWN]):
 					if event.type == KEYUP:
 						if event.key == K_TAB: showPlayerList = False
 						elif event.key == K_F9: wireframe = not wireframe
@@ -668,7 +672,6 @@ def handleInput(): #{{{
 						elif event.key == 167: showConsole = True #linux
 						elif event.key == 96: showConsole = True #windows
 						elif event.key == K_ESCAPE: quit = True
-					elif event.type == QUIT: quit = True
 
 				pressed = pygame.key.get_pressed()
 				if pressed[K_RIGHT]:
@@ -691,11 +694,12 @@ def handleInput(): #{{{
 				if pressed[ord('x')]: print x
 				if pressed[ord('y')]: print y
 				if pressed[ord('a')]: print angle
+				if pressed[ord('m')]: print (mx, my)
 
 			else:
 				pressed = pygame.key.get_pressed()
 
-				for event in pygame.event.get([KEYDOWN]):
+				for event in pygame.event.get([KEYUP,KEYDOWN]):
 					if event.type == KEYDOWN:
 						if event.key == 167 or event.key == K_ESCAPE: showConsole = False
 						elif event.key == K_UP:
