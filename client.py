@@ -431,17 +431,12 @@ def render(): #{{{
 	futTwrAng = (futureTowerAngle + 90) % 360
 	diffAng = (futTwrAng - twrAng) % 360
 	if diffAng > 180: diffAng = diffAng -360
-	print "#######################################"
-	print "futureTowerAngle: ", futTwrAng
-	print "towerAngle: ", twrAng
-	print "diffangle: ", diffAng
-	print "#######################################"
 	seconds = time.time() - t
 	if seconds >= 1/30:
-		if diffAng > 1:
-			diffAng = 1
-		if diffAng < -1:
-			diffAng = -1
+		if diffAng > 1.25:
+			diffAng = 1.25
+		if diffAng < -1.25:
+			diffAng = -1.25
 		towerAngle += diffAng
 
 	if showPlayerList: displayPlayerList()
@@ -635,15 +630,22 @@ def checkMove(direction): #{{{
 		x, y = oldx, oldy
 #}}}
 def rotate(direction): #{{{
-	global angle
+	global angle, towerAngle
 	oldAngle = angle
+	oldTowerAngle = towerAngle
 	if direction == "RIGHT":
 		angle -= 1
-		if angle == -1: angle = 360
+		towerAngle += angle - oldAngle
+		if angle == -1: 
+			angle = 360
+			towerAngle += angle - oldAngle # Is this correct? 
 	else:
 		angle = (angle + 1) % 360
-	if collision(x,y,angle): angle = oldAngle
-
+		towerAngle += angle - oldAngle
+	if collision(x,y,angle): 
+		angle = oldAngle
+		towerAngle = oldTowerAngle
+		
 #}}}
 def handleMouse(): #{{{
 	global showConsole, mx, my, towerAngle, futureTowerAngle, zoom, shootTime
