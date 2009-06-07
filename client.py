@@ -220,6 +220,10 @@ def recv_data(): #{{{
 					for obj in tmp[1]:
 						objs.insert(0, GameObject(obj['position'][0], obj['position'][1], 10.0, 10.0, 0.0, obj['type']))
 					LEVEL = Level(tmp[0], objs)
+				elif c[0:2] == "KT":
+					tmp = cPickle.loads(c[2:])
+					for obj in tmp:
+						KILLED_TANKS.append(obj)
 				elif c[0] == "I":
 					id = c[1:]
 				elif c[0] == "K":
@@ -232,6 +236,7 @@ def recv_data(): #{{{
 					victimHitAtY = c[3]
 					
 					KILLED_TANKS.append(tmp[4])
+					
 					namesFound = 0
 					for p in PLAYERS:
 						if int(p['id']) == int(killerId):
@@ -601,6 +606,9 @@ def collision(tank1x, tank1y, angle): #{{{
 			me = p
 			continue
 		p2.append(GameObject(p['position'][0], p['position'][1], 42.0, 21.0, p['angle']))
+		
+	for k in KILLED_TANKS:
+		p2.append(GameObject(k['position'][0], k['position'][1], 42.0, 21.0, k['angle']))
 
 	(obj1, obj2) = CheckCollision(a, p2)
 	if obj2 != None:
@@ -787,6 +795,7 @@ if __name__ == "__main__": #{{{
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.sendto('C' + nick, ADDR)
 	sock.sendto('GL', ADDR)
+	sock.sendto('GKT', ADDR)
 
 	sendlock = thread.allocate_lock()
 

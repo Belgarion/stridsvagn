@@ -15,6 +15,7 @@ from GameObject import *
 #{{{ Globals
 width = 800
 height = 600
+KILLED_TANKS = []
 #}}}
 class Level: #{{{
 	def __init__(self, filename):
@@ -49,7 +50,7 @@ class Player: #{{{
 		self.score = 0
 		self.kills = 0
 		self.obj = GameObject(self.position.x, self.position.y, 42.0, 21.0, self.angle)
-
+		self.spawn()
 	def getInfo(self):
 		info = {'id': self.id, 'name': self.name, 'ping': self.ping, 'position': self.position, 'angle': self.angle, 'towerAngle': self.towerAngle, 'color': self.color, 'score': self.score, 'kills': self.kills}
 		return info
@@ -59,6 +60,7 @@ class Player: #{{{
 		tempdict = {'position':self.position, 'angle':self.angle, 'towerAngle':self.towerAngle, 'color':color}
 		a = cPickle.dumps( (killer, self.id, hitX, hitY, tempdict) )
 		broadcast_data(None, "K%s" % a)
+		KILLED_TANKS.append(tempdict)
 		self.spawn()
 
 		self.score -= 1
@@ -125,6 +127,10 @@ class Shot: #{{{
 				p.hp -= 50
 				if (p.hp <= 0):
 					p.kill(self.ownerId, self.x, self.y)
+				return True
+		for k in KILLED_TANKS:
+			obj = GameObject(k['position'][0], k['position'][1], 42.0, 21.0, k['angle'])
+			if (self.intersects(obj)):
 				return True
 
 		for obj in level.objs:
@@ -278,6 +284,9 @@ def process_connection(): #{{{
 							if data[1] == 'L': #get level
 								packet = ("L" + cPickle.dumps( (level.filename, level.data) ))
 								send_data(player.addr, packet)
+							if data[1:3] == 'KT':
+								packet = ("KT" + cPickle.dumps((KILLED_TANKS) ))
+								send_data(player.addr, packet)								
 						elif data[0] == '\\':
 							(command, sep, args) = data[1:].partition(' ')
 							if command == 'quit':
