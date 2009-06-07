@@ -427,9 +427,10 @@ def render(): #{{{
 	text.DrawFPS("FPS: %d" % fps)
 
 
-	twrAng = towerAngle + 90
-	futTwrAng = futureTowerAngle + 90
-	diffAng = futTwrAng - twrAng
+	twrAng = (towerAngle + 90) % 360
+	futTwrAng = (futureTowerAngle + 90) % 360
+	diffAng = (futTwrAng - twrAng) % 360
+	if diffAng > 180: diffAng = diffAng -360
 	print "#######################################"
 	print "futureTowerAngle: ", futTwrAng
 	print "towerAngle: ", twrAng
