@@ -74,18 +74,13 @@ class Player: #{{{
 		pl = []
 		for p in PLAYERS:
 			pl.append(p.obj)
-		badpos = 1
-		while (badpos):
+		while True:
 			newx = random.randint(-width/2 + 50, width/2 - 50)
 			newy = random.randint(-height/2 + 50, height/2 - 50)
-			found = 0
 			self.obj.setpos(newx, newy)
-			if not CheckCollision(self.obj, level.objs) == (None, None):
-				found = 1
-			if not CheckCollision(self.obj, pl) == (None, None):
-				found = 1
-			if not found:
-				badpos = 0
+			if not CheckCollision(self.obj, level.objs) == (None, None) or not CheckCollision(self.obj, pl) == (None, None):
+				continue
+			break
 
 		self.position = newx, newy
 
