@@ -598,7 +598,13 @@ def collision(tank1x, tank1y, angle): #{{{
 	
 	a = GameObject(tank1x, tank1y, 42.0, 21.0, angle)
 	(obj1, obj2) = CheckCollision(a, LEVEL.objs)
-	if obj1 != None: return True
+	if obj1 != None: 
+		# Move it away fram blocks so rotating is possible
+		x1, y1, x2, y2 = obj1.position.x, obj1.position.y, obj2.position.x, obj2.position.y
+		angle = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
+		x -= math.sin(math.radians(angle+90)) * speedForward
+		y += math.cos(math.radians(angle+90)) * speedForward
+		return True
 	
 	p2 = []
 	for p in PLAYERS:
