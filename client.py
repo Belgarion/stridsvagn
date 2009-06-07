@@ -573,14 +573,10 @@ def collision(tank1x, tank1y, angle): #{{{
 	(obj1, obj2) = CheckCollision(a, LEVEL.objs)
 	if obj1 != None: return True
 	
-	for p in PLAYERS: # Could be optimized
-		if (int(p['id']) == int(id)):
-			me = p
-			break
-	
 	p2 = []
 	for p in PLAYERS:
-		if p['id'] == me['id']:
+		if int(p['id']) == int(id):
+			me = p
 			continue
 		p2.append(GameObject(p['position'][0], p['position'][1], 42.0, 21.0, p['angle']))
 
