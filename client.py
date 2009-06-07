@@ -775,6 +775,12 @@ def runCmd(cmd): #{{{
 		send(cmd)
 #}}}
 if __name__ == "__main__": #{{{
+	if len(sys.argv) > 1:
+		HOST = sys.argv[1]
+		if len(sys.argv) > 2:
+			PORT = int(sys.argv[2])
+		
+		ADDR = (HOST, PORT)
 	width = 800
 	height = 600
 	quit = False
